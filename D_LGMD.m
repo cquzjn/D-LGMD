@@ -1,7 +1,7 @@
 clear;clc;
 
 %**************Claimed Parameters********************************
-sigma_E = 1; %0.4:0.02:1; %0.4:0.02:1.5;     %distributed excitation
+sigma_E = 1.5; %0.4:0.02:1; %0.4:0.02:1.5;     %distributed excitation
 sigma_I = 5;%1.6:0.08:4; %1.6:0.08:6;
 FrameSTRT_Num = 1;
 FrameEnd_Num = 122;
@@ -9,15 +9,15 @@ Max_delay = 2;
 LGMD_OutputS = zeros(length(sigma_E),FrameEnd_Num-Max_delay-1);
 FFI = zeros(length(sigma_E),FrameEnd_Num-Max_delay-1);
 Threshold_Pnt = zeros(length(sigma_E),1);
-kernalG = ones(4,4)*0.0625;
+kernalG = ones(4,4);
 
 a = 1.5;%1.5~1.8  
 % b = 4;
 r = 6;
 Thresh_G_0 = 0.5;
-alfa = -0.6;%-0.1;
-beta = 0.4;%0.5;
-lamda = 0.6;%0.7;
+alfa = -0.1;%-0.1,-0.6;
+beta = 0.5;%0.5,0.4;
+lamda = 0.7;%0.7,0.6;
 %****************define h(t)***************************************
 x = -r:1:r;
 y = -r:1:r;
@@ -46,20 +46,24 @@ for k = 1:length(sigma_E)
     Tempkernel = DOGAnalysis(a, sigma_I(h)/sigma_E(k) , sigma_E(k), r ,k);  %Func(a,b,sigma,r);
     kernel_E = GaussAnalysis(sigma_E(k),r);
     kernel_E(ht<1) = Tempkernel(ht<1);   %To form distributed time delay, which is determined by the h(t) distribution.(Self-inhibition involved here)
-    kernel_E(kernel_E<0) = 0
+    kernel_E(ht>1) = 0
+    kernel_E(kernel_E<0) = 0;
+    Showkerne_E = round (kernel_E*100);
 
     kernel_I = a * GaussAnalysis(sigma_I(h),r);
     kernel_I(ht<1) =0;%(here I make the h(t) distribution in this principle: delay=0 when ht<1, otherwise delay=1)
     kernel_I_delay1 = kernel_I;
 
     kernel_I_delay1(ht<1) =0;
-    kernel_I_delay1(ht>1.9) =0
+    kernel_I_delay1(ht>1.8999) =0
+    Showkernel_I_delay1 = round (kernel_I_delay1*100);
     
     kernel_I_delay2 = kernel_I;
-    kernel_I_delay2(ht<1.9) =0
+    kernel_I_delay2(ht<1.8999) =0
+    Showkernel_I_delay2 = round (kernel_I_delay2*100);
 
 %*****************************************************  
- FilePath = 'E:\±¸·Ý\Vedios4Detection\OSMO_Flight\Chair1\DemoFlight_';
+ FilePath = 'F:\Mori_Expansion_Detection\Expansion_Detection\venv\Figures\Chair1\DemoFlight_';
 %***************************************************
 tic;
 t1 = toc;
@@ -104,8 +108,8 @@ t1 = toc;
         LGMD_OutputG(k,i) = sum(sum(Layer_G));    %**output of G or S layer***
 
    figure(1)
-   Video_Resize = imresize(Layer_S,0.5);
-   imshow(Layer_S);
+   Video_Resize = imresize(Layer_G,0.5);
+   imshow(Video_Resize);
     end
     %*************************************************
     Normalized_OutS(k,1:i) = mapminmax(LGMD_OutputS(k,:), 0, 1);
@@ -116,12 +120,10 @@ t2 = toc;
 RunTime = t2-t1
 %*****************plots********************************************************************************
 for k = 1:length(sigma_E)
-%     figure (3)
-%     hold on
-%     plot (1:i,LGMD_OutputS(k,(1:i)));
-    figure (4)
-    hold on 
-    plot (1:i,LGMD_OutputG(k,(1:i)));
+    figure (3)
+    hold on
+    plot (1:i,Normalized_OutS(k,(1:i)));
+    plot (1:i,Normalized_OutG(k,(1:i)));
 end
 
 
